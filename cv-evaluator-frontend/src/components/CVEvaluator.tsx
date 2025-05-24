@@ -75,7 +75,7 @@ const CVEvaluator = () => {
 
     try {
       console.log('Sending request to API...');
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/evaluate`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/evaluate`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
