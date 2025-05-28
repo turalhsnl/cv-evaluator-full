@@ -10,8 +10,6 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import PDFDocument from 'pdfkit';
 
-
-
 dotenv.config();
 console.log('Environment Check:');
 console.log('- OpenAI API Key length:', process.env.OPENAI_API_KEY?.length);
@@ -26,7 +24,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const allowedOrigins = ['http://127.0.0.1:5173', 'http://localhost:5173'];
 // Normalize upload directory path
 const uploadDir = process.env.PDF_STORAGE_PATH 
   ? path.normalize(process.env.PDF_STORAGE_PATH)
@@ -68,21 +65,13 @@ const upload = multer({
   },
 });
 
-// Middleware to parse JSON bodies
+// Middleware
 app.use(cors({
-  origin: function(origin, callback){
-    console.log('CORS Origin:', origin);
-    if(!origin) return callback(null, true);
-    if(allowedOrigins.indexOf(origin) === -1){
-      const msg = `CORS origin ${origin} not allowed`;
-      console.warn(msg);
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
+  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  methods: ['GET', 'POST'],
   credentials: true
 }));
-
+app.use(express.json());
 
 // Add response tracking middleware
 app.use((req, res, next) => {

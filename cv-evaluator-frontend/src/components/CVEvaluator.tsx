@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-
 const CVEvaluator = () => {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [jobFile, setJobFile] = useState<File | null>(null);
@@ -75,7 +74,7 @@ const CVEvaluator = () => {
 
     try {
       console.log('Sending request to API...');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/evaluate`, {
+      const response = await fetch('http://localhost:3001/api/evaluate', {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -103,7 +102,7 @@ const CVEvaluator = () => {
 
   const downloadReport = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:3001/api/generate-report', {
+      const response = await fetch('http://localhost:3001s/api/generate-report', {
         method: 'POST',
         credentials: 'include',
         headers: {
