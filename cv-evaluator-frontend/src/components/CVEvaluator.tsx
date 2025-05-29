@@ -4,8 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
+import type { Evaluation } from './Dashboard';
 
-const CVEvaluator = () => {
+const CVEvaluator = ({ evaluations, setEvaluations }: Props) => {
+  const navigate = useNavigate();
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [jobFile, setJobFile] = useState<File | null>(null);
   const [evaluationReport, setEvaluationReport] = useState<{
@@ -91,7 +94,19 @@ const CVEvaluator = () => {
         throw new Error(`API error: ${result.error || 'Unknown error'}`);
       }
 
-      setEvaluationReport(result);
+    setEvaluationReport(result);
+
+    const newEntry: Evaluation = {
+    filename: cvFile.name,
+    matchScore: result.matchScore,
+    sections: result.sections
+    };
+
+    setEvaluations(prev => [...prev, newEntry]);
+
+    // Navigate to dashboard after scan
+    navigate('/dashboard');
+
     } catch (error) {
       console.error('Full error details:', error);
       setError('Failed to evaluate CV. Please try again.');
@@ -102,7 +117,7 @@ const CVEvaluator = () => {
 
   const downloadReport = async () => {
     try {
-      const response = await fetch('http://localhost:3001s/api/generate-report', {
+      const response = await fetch('http://localhost:3001/api/generate-report', {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -127,6 +142,11 @@ const CVEvaluator = () => {
       console.error('Error downloading report:', error);
       setError('Failed to download report');
     }
+  };
+
+  type Props = {
+  evaluations: Evaluation[];
+  setEvaluations: React.Dispatch<React.SetStateAction<Evaluation[]>>;
   };
 
   return (
