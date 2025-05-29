@@ -75,10 +75,4 @@ cv-evaluator-full/
 └── package.json
 ```
 
-## 📄 License
 
-This project is licensed under the MIT License.
-
-## 🙌 Acknowledgements
-
-Special thanks to the contributors and the OpenAI API for enabling the core functionality of this project.
