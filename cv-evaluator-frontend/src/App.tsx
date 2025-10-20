@@ -4,6 +4,8 @@ import CVEvaluator from './components/CVEvaluator';
 import Dashboard from './components/Dashboard';
 import Header from './components/Header';
 import type { Evaluation } from './components/Dashboard';
+import Login from './components/Login';
+import Signup from './components/Signup';
 
 function App() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -27,19 +29,24 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <Routes>
-          <Route
-            path="/"
-            element={<CVEvaluator evaluations={evaluations} setEvaluations={setEvaluations} />}
-          />
-          <Route
-            path="/dashboard"
-            element={<Dashboard evaluations={evaluations} />}
-          />
-        </Routes>
-      </div>
+      <Header />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <CVEvaluator
+              evaluations={evaluations}
+              setEvaluations={setEvaluations}
+            />
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={<Dashboard evaluations={evaluations} />}
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
     </Router>
   );
 }
