@@ -14,11 +14,21 @@ const Login = () => {
 
         <form
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log('Submitted');
-            console.log({ username, password });
-            // TODO: Call BE
+
+            const res = await fetch('/api/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ username, password }),
+            });
+
+            if (res.ok) {
+              window.location.href = '/';
+            }
           }}
         >
           <Input

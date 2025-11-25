@@ -2,13 +2,16 @@
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
 import path from 'path';
 import pdf from 'pdf-parse/lib/pdf-parse.js';
 import OpenAI from 'openai';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import PDFDocument from 'pdfkit';
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 console.log('Environment Check:');
@@ -18,6 +21,10 @@ console.log('- Max File Size:', process.env.MAX_FILE_SIZE);
 console.log('- Allowed Origins:', process.env.ALLOWED_ORIGINS);
 const app = express();
 const port = process.env.PORT || 3001;
+
+const DATABASE = {
+  users: [],
+}
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -72,6 +79,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Add response tracking middleware
 app.use((req, res, next) => {
@@ -323,6 +331,108 @@ app.post('/api/generate-report', async (req, res) => {
   }
 });
 
+app.post('/api/signup', async (req, res) => {
+  const signupData = req.body;
+  if (!signupData) {
+    return res.status(400).json({ error: 'Missing data' });
+  }
+
+  const {username, password, confirmPassword} = signupData;
+  if (!username || !password || !confirmPassword) {
+    return res.status(400).json({ error: 'Missing username, password, or confirm password' });
+  }
+
+  if (password !== confirmPassword) {
+    return res.status(400).json({ error: 'Passwords do not match' });
+  }
+
+  const existingUser = DATABASE.users.find(user => user.username === username);
+  if (existingUser) {
+    return res.status(400).json({ error: 'Username already exists' });
+  }
+
+  DATABASE.users.push({
+    username,
+    password: await hashPassword(password),
+  });
+
+  const token = jwt.sign({ username }, process.env.JWT_SECRET);
+
+
+  res.cookie('session', token, {
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  return res.status(200).json({ message: 'User created successfully' });
+});
+
+app.post('/api/login', async (req, res) => {
+  const loginData = req.body;
+  if (!loginData) {
+    return res.status(400).json({ error: 'Missing data' });
+  }
+
+  const {username, password } = loginData;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Missing username or password' });
+  }
+
+  const existingUser = DATABASE.users.find(user => user.username === username);
+  if (!existingUser) {
+    return res.status(400).json({ error: 'User not found' });
+  }
+
+  if (!await comparePasswords(existingUser.password, password)) {
+    return res.status(400).json({ error: 'Incorrect password' });
+  }
+
+  const token = jwt.sign({ username }, process.env.JWT_SECRET);
+
+
+  res.cookie('session', token, {
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
+
+  return res.status(200).json({ message: 'User logged in successfully' });
+});
+
+app.get('/api/session', async (req, res) => {
+  const token = req.cookies?.session;
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { username } = jwt.verify(token, process.env.JWT_SECRET);
+    const user = DATABASE.users.find(user => user.username === username);
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    return res.status(200).json({
+      user: {
+        username,
+      },
+    });
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+});
+
+app.post('/api/logout', async (req, res) => {
+  res.clearCookie('session');
+  return res.status(200).json({ message: 'Logged out successfully' });
+});
+
 // Generic error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err.stack);
@@ -353,3 +463,25 @@ process.on('unhandledRejection', (error) => {
   console.error('Unhandled Rejection:', error);
   process.exit(1);
 });
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64));
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePasswords(
+  storedPassword,
+  suppliedPassword
+) {
+  // split() returns array
+  const [hashedPassword, salt] = storedPassword.split(".");
+  // we need to pass buffer values to timingSafeEqual
+  const hashedPasswordBuf = Buffer.from(hashedPassword, "hex");
+  // we hash the new sign-in password
+  const suppliedPasswordBuf = (await scryptAsync(suppliedPassword, salt, 64));
+  // compare the new supplied password with the stored hashed password
+  return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
+}

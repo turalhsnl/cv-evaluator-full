@@ -15,11 +15,21 @@ const Signup = () => {
 
         <form
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            console.log('Submitted');
-            console.log({ username, password, confirmPassword });
-            // TODO: Call BE
+
+            const res = await fetch('/api/signup', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({ username, password, confirmPassword }),
+            });
+
+            if (res.ok) {
+              window.location.href = '/';
+            }
           }}
         >
           <Input

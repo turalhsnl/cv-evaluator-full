@@ -6,6 +6,7 @@ import Header from './components/Header';
 import type { Evaluation } from './components/Dashboard';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import SessionProvider from './contexts/session/session-provider';
 
 function App() {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
@@ -28,26 +29,28 @@ function App() {
   }, [evaluations]);
 
   return (
-    <Router>
-      <Header />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <CVEvaluator
-              evaluations={evaluations}
-              setEvaluations={setEvaluations}
-            />
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={<Dashboard evaluations={evaluations} />}
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-    </Router>
+    <SessionProvider>
+      <Router>
+        <Header />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <CVEvaluator
+                evaluations={evaluations}
+                setEvaluations={setEvaluations}
+              />
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={<Dashboard evaluations={evaluations} />}
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </Router>
+    </SessionProvider>
   );
 }
 
