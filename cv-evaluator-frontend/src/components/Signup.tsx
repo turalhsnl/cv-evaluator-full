@@ -8,6 +8,8 @@ const Signup = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [error, setError] = useState('');
+
   return (
     <div className="pt-[35%]">
       <div className="p-8 h-[50vh] bg-gray-100">
@@ -30,30 +32,46 @@ const Signup = () => {
             if (res.ok) {
               window.location.href = '/';
             }
+
+            const body = await res.json();
+
+            setError(body.error);
           }}
         >
           <Input
             placeholder="Username..."
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setError('');
+              setUsername(e.target.value);
+            }}
           />
 
           <Input
             placeholder="Password..."
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            onChange={(e) => {
+              setError('');
+              setPassword(e.target.value);
+            }}
           />
 
           <Input
             placeholder="Confirm password..."
             type="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setError('');
+              setConfirmPassword(e.target.value);
+            }}
           />
 
           {password !== confirmPassword && (
             <p className="text-red-500 text-sm">Passwords do not match.</p>
           )}
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <Button
             type="submit"

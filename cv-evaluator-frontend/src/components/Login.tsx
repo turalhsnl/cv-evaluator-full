@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   return (
     <div className="pt-[35%]">
@@ -29,19 +30,32 @@ const Login = () => {
             if (res.ok) {
               window.location.href = '/';
             }
+
+            const body = await res.json();
+
+            setError(body.error);
           }}
         >
           <Input
             placeholder="Username..."
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setError('');
+              setUsername(e.target.value);
+            }}
           />
 
           <Input
             placeholder="Password..."
+            type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setError('');
+              setPassword(e.target.value);
+            }}
           />
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <Button
             type="submit"
